@@ -3,7 +3,15 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/nav_graph"
-    app:startDestination="@id/loginFragment">
+    app:startDestination="@id/loginFragment"
+    >
+
+    <!-- In nav_graph.xml, inside the <navigation> tag -->
+    <fragment
+        android:id="@+id/myTradesFragment"
+        android:name="com.example.finalproject3.MyTradesFragment"
+        android:label="My Trades"
+        tools:layout="@layout/fragment_my_trades" />
 
     <!-- Login Fragment (New Start Destination) -->
     <fragment

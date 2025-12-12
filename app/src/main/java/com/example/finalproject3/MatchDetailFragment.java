@@ -123,6 +123,7 @@ public class MatchDetailFragment extends Fragment {
             newTradeData.put("tradeType", type.name());
             newTradeData.put("amount", tradeAmount);
             newTradeData.put("status", "OPEN");
+            newTradeData.put("timestamp", com.google.firebase.Timestamp.now());
 
             transaction.set(tradeDocRef, newTradeData);
 

@@ -20,6 +20,7 @@ import androidx.navigation.fragment.NavHostFragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.google.android.material.snackbar.Snackbar;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.DocumentReference;
@@ -27,6 +28,7 @@ import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.google.firebase.firestore.WriteBatch;
+import com.google.android.material.snackbar.Snackbar;
 
 import java.util.Random;
 
@@ -100,11 +102,18 @@ public class MatchListFragment extends Fragment {
                 } else if (itemId == R.id.action_simulate_results) {
                     simulateMatchResults();
                     return true;
+                } else if (itemId == R.id.action_my_trades) { // <-- ADD THIS
+                    NavHostFragment.findNavController(MatchListFragment.this).navigate(R.id.myTradesFragment);
+                    return true;
                 }
+
                 return false;
             }
         }, getViewLifecycleOwner(), Lifecycle.State.RESUMED);
     }
+
+// In MatchListFragment.java
+// Add import for com.google.android.material.snackbar.Snackbar;
 
     private void simulateMatchResults() {
         Toast.makeText(getContext(), "Simulating results...", Toast.LENGTH_SHORT).show();
@@ -128,23 +137,29 @@ public class MatchListFragment extends Fragment {
                     final double payoutMultiplier = 2.0;
                     final Random random = new Random();
                     long totalWinnings = 0;
+                    int wins = 0;
+                    int losses = 0;
 
                     WriteBatch batch = db.batch();
 
                     for (QueryDocumentSnapshot tradeDoc : queryDocumentSnapshots) {
-                        String tradeTypeStr = tradeDoc.getString("tradeType");
-                        Long tradeAmount = tradeDoc.getLong("amount");
-                        if(tradeAmount == null) continue; // Skip if amount is missing
+                        Trade trade = tradeDoc.toObject(Trade.class);
+                        if (trade.getAmount() <= 0) continue;
 
-                        int matchResult = random.nextInt(3); // 0, 1, or 2
+                        int matchResult = random.nextInt(3); // 0=Home, 1=Away, 2=Draw
                         boolean isWin = false;
 
-                        if (tradeTypeStr.equals("HOME_WIN") && matchResult == 0) isWin = true;
-                        else if (tradeTypeStr.equals("AWAY_WIN") && matchResult == 1) isWin = true;
-                        else if (tradeTypeStr.equals("DRAW") && matchResult == 2) isWin = true;
+                        if (trade.getTradeType() == Trade.TradeType.HOME_WIN && matchResult == 0) isWin = true;
+                        else if (trade.getTradeType() == Trade.TradeType.AWAY_WIN && matchResult == 1) isWin = true;
+                        else if (trade.getTradeType() == Trade.TradeType.DRAW && matchResult == 2) isWin = true;
 
                         if (isWin) {
-                            totalWinnings += (long) (tradeAmount * payoutMultiplier);
+                            totalWinnings += (long) (trade.getAmount() * payoutMultiplier);
+                            batch.update(tradeDoc.getReference(), "result", "WIN");
+                            wins++;
+                        } else {
+                            batch.update(tradeDoc.getReference(), "result", "LOSS");
+                            losses++;
                         }
 
                         batch.update(tradeDoc.getReference(), "status", "CLOSED");
@@ -156,11 +171,21 @@ public class MatchListFragment extends Fragment {
                     }
 
                     final long finalWinnings = totalWinnings;
+                    final int finalWins = wins;
+                    final int finalLosses = losses;
+
                     batch.commit().addOnSuccessListener(aVoid -> {
-                        String resultMessage = (finalWinnings > 0)
-                                ? "Simulation complete! You won " + finalWinnings + " TP!"
-                                : "Simulation complete. No winning trades this time.";
-                        Toast.makeText(getContext(), resultMessage, Toast.LENGTH_LONG).show();
+                        String resultMessage = String.format(
+                                "Simulation complete! Wins: %d, Losses: %d. You won %d TP!",
+                                finalWins, finalLosses, finalWinnings
+                        );
+                        // Show a Snackbar instead of a Toast
+                        Snackbar.make(requireView(), resultMessage, Snackbar.LENGTH_LONG)
+                                .setAction("DETAILS", v -> {
+                                    // Navigate to the trades screen to see the results
+                                    NavHostFragment.findNavController(this).navigate(R.id.myTradesFragment);
+                                })
+                                .show();
                     }).addOnFailureListener(e -> {
                         Toast.makeText(getContext(), "Simulation failed: " + e.getMessage(), Toast.LENGTH_SHORT).show();
                     });
@@ -169,4 +194,5 @@ public class MatchListFragment extends Fragment {
                     Toast.makeText(getContext(), "Error fetching trades: " + e.getMessage(), Toast.LENGTH_SHORT).show();
                 });
     }
+
 }

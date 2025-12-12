@@ -8,28 +8,34 @@ public class Trade {
         DRAW
     }
 
-    private final String matchId;
-    private final TradeType tradeType;
-    private final int amount; // Amount of "Tactix Points" risked
+    private String matchId;
+    private TradeType tradeType;
+    private int amount;
+    private String status;
+    private String result;
+    public Trade() {}
 
     public Trade(String matchId, TradeType tradeType, int amount) {
         this.matchId = matchId;
         this.tradeType = tradeType;
         this.amount = amount;
+        this.status = "OPEN"; // Default status
     }
 
     // --- Getters ---
-    public String getMatchId() {
-        return matchId;
-    }
+    public String getMatchId() { return matchId; }
+    public TradeType getTradeType() { return tradeType; }
+    public int getAmount() { return amount; }
+    public String getStatus() { return status; }
+    public String getResult() { return result; }
 
-    public TradeType getTradeType() {
-        return tradeType;
-    }
+    // --- Setters (needed for Firestore) ---
+    public void setMatchId(String matchId) { this.matchId = matchId; }
+    public void setTradeType(TradeType tradeType) { this.tradeType = tradeType; }
+    public void setAmount(int amount) { this.amount = amount; }
+    public void setStatus(String status) { this.status = status; }
+    public void setResult(String result) { this.result = result; }
 
-    public int getAmount() {
-        return amount;
-    }
 
     @Override
     public String toString() {

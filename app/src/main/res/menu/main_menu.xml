@@ -9,5 +9,9 @@
         android:id="@+id/action_sign_out"
         android:title="Sign Out"
         app:showAsAction="never" />
+    <item
+        android:id="@+id/action_my_trades"
+        android:title="My Trades"
+        app:showAsAction="never" />
 </menu>
 
